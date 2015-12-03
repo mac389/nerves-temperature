@@ -31,11 +31,44 @@ def adjust_spines(ax,spines=['left','bottom']):
 def raster(activity, ax, color='k'):
     
     units,duration = activity.shape
-    for ith, trial in enumerate(activity.T):
+    for ith, trial in enumerate(activity):
         ax.vlines(np.where(trial==1)[0], ith + .5, ith + 1.5, color=color)
     ax.set_ylim(ymin=0,ymax=units)
     ax.set_xlim(xmin=0,xmax=duration)
     return ax
+
+def hopfield_network_activity(overlap,r,memories,moniker='x'):
+    gs = gridspec.GridSpec(1, 4, width_ratios=[5,1,5,1])
+
+    memory_overlap = plt.subplot(gs[0])
+    cax = memory_overlap.imshow(overlap,interpolation='nearest',aspect='auto',vmin=-1,vmax=1)
+    adjust_spines(memory_overlap)
+    memory_overlap.set_xlabel(format('Time'))
+    memory_overlap.set_ylabel(format('Memory'))
+    cbar = plt.colorbar(cax)
+    cbar.set_ticks([-1,-0.5,0,0.5,1])
+    cbar.set_label(format('Overlap'))
+
+    beginning_memory_overlap = plt.subplot(gs[1])
+    beginning_memory_overlap.imshow(overlap[:,0][:,np.newaxis],interpolation='nearest',vmin=-1,vmax=1)
+    adjust_spines(beginning_memory_overlap,[])
+
+    rax = plt.subplot(gs[2])
+    raster(r,rax)
+    adjust_spines(rax)
+    rax.spines['bottom'].set_smart_bounds(False)
+    rax.set_xlabel(format('Time'))
+    rax.set_ylabel(format('Neuron'))
+
+    ending_memory_overlap = plt.subplot(gs[3])
+    ending_memory_overlap.imshow(overlap[:,-1][:,np.newaxis],interpolation='nearest',
+        vmin=-1,vmax=1)
+    adjust_spines(ending_memory_overlap,[])
+
+    plt.tight_layout()
+    plt.show()
+
+
 
 def network_activity(overlap,r,moniker='x',hopfield=False):
     fig = plt.figure()

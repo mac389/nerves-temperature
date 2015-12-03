@@ -1,4 +1,5 @@
 import numpy as np 
+import random
 import Graphics as artist
 
 def make_memories(nmem=20,nunits=100,sparsity=0.25):
@@ -10,7 +11,7 @@ def make_memories(nmem=20,nunits=100,sparsity=0.25):
 def sgn(arr):
 	arr[arr>=0] = 1
 	arr[arr<0] = -1
-	return arr
+	return arr.astype(int)
 
 def make_M(memories):
     M = np.array([np.outer(memory,memory) for memory in memories]).sum(axis=0)
@@ -30,24 +31,26 @@ def overlap(u,v):
 	if u.shape == v.shape:
 		return u.dot(v)/float(len(v))
 
-
 duration = 1000
 nunits = 100
-nmem=20
+nmem=10
 memories = make_memories(nmem=nmem,nunits=nunits)
 M = make_M(memories)
 r = np.zeros((nunits,duration),dtype=int)
 
 #artist.connection_matrix_and_memory(memories,M,moniker='hopfield')
 
-
 #Initial conditions 
 mixing_fraction = 0.5 
-r[:,0] = 2*np.round(np.random.random_sample(size=(nunits,))).astype(int)-1
-
+#r[:,0] = 2*np.round(np.random.random_sample(size=(nunits,))).astype(int)-1
+r[:,0] = memories[1,:]
 for t in xrange(1,duration):
-	r[:,t] = sgn(M.dot(r[:,t-1]))
+	#Asynchronous updating
+	r[:,t] = r[:,t-1]
 
-overlap = np.array([memory.dot(r)/float(nmem) for memory in memories])
+	idx = random.choice(xrange(nunits))
+	r[idx,t] = 1 if M[idx,:].dot(r[:,t-1]) >= 0 else -1
 
-artist.network_activity(overlap,r,moniker='hopfield',hopfield=True)
+overlap = np.array([memory.dot(r)/float(nunits) for memory in memories])
+
+artist.hopfield_network_activity(overlap,r,memories,moniker='hopfield')
